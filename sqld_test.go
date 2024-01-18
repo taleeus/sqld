@@ -16,7 +16,7 @@ func buildTestQuery(filters testFilters) SqldFn {
 			"name",
 			"pizzas",
 		),
-		Block("FROM Table"),
+		From("Table"),
 		Where(
 			Not(
 				And(

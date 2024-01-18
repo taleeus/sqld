@@ -22,6 +22,13 @@ func Block(block string) SqldFn {
 	}
 }
 
+// Select builds a callback that returns a SELECT statement with a concatenation of
+// the provided columns.
+//
+//	sqld.Select(
+//		"name",
+//		"pizzas",
+//	)
 func Select(columns ...string) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if len(columns) == 0 {

@@ -15,13 +15,20 @@ import (
 //			name,
 //			pizzas
 //		FROM Table`,
-//	),
+//	)
 func Block(block string) SqldFn {
 	return func() (string, []driver.Value, error) {
 		return block, nil, nil
 	}
 }
 
+// Select builds a callback that returns a SELECT statement with a concatenation of
+// the provided columns.
+//
+//	sqld.Select(
+//		"name",
+//		"pizzas",
+//	)
 func Select(columns ...string) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if len(columns) == 0 {
@@ -29,6 +36,44 @@ func Select(columns ...string) SqldFn {
 		}
 
 		return "SELECT\n\t" + strings.Join(columns, ",\n\t"), nil, nil
+	}
+}
+
+func From(tableName string) SqldFn {
+	return func() (string, []driver.Value, error) {
+		return "FROM " + tableName, nil, nil
+	}
+}
+
+type JoinType string
+
+const (
+	LEFT_JOIN        = "LEFT"
+	RIGHT_JOIN       = "RIGHT"
+	INNER_JOIN       = "INNER"
+	CROSS_JOIN       = "CROSS"
+	FULL_JOIN        = "FULL"
+	LEFT_OUTER_JOIN  = "LEFT OUTER"
+	RIGHT_OUTER_JOIN = "RIGHT OUTER"
+	INNER_OUTER_JOIN = "INNER OUTER"
+	CROSS_OUTER_JOIN = "CROSS OUTER"
+	FULL_OUTER_JOIN  = "FULL OUTER"
+)
+
+func Join(joinType JoinType, tableName string, op SqldFn) SqldFn {
+	return func() (string, []driver.Value, error) {
+		s, vals, err := op()
+		if err != nil {
+			return "", nil, fmt.Errorf("%s JOIN: %w", joinType, err)
+		}
+
+		return string(joinType) + " JOIN " + tableName + " ON " + s, vals, nil
+	}
+}
+
+func JoinEq(firstColumn string, secondColumn string) SqldFn {
+	return func() (string, []driver.Value, error) {
+		return firstColumn + " = " + secondColumn, nil, nil
 	}
 }
 

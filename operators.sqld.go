@@ -39,6 +39,7 @@ func Select(columns ...string) SqldFn {
 	}
 }
 
+// From builds a callback that just returns a FROM statement with the provided table
 func From(tableName string) SqldFn {
 	return func() (string, []driver.Value, error) {
 		return "FROM " + tableName, nil, nil
@@ -60,6 +61,8 @@ const (
 	FULL_OUTER_JOIN  = "FULL OUTER"
 )
 
+// Join builds a callback that returns a JOIN statement of the provided type
+// with the desired table, with a condition callback
 func Join(joinType JoinType, tableName string, op SqldFn) SqldFn {
 	return func() (string, []driver.Value, error) {
 		s, vals, err := op()
@@ -71,7 +74,8 @@ func Join(joinType JoinType, tableName string, op SqldFn) SqldFn {
 	}
 }
 
-func JoinEq(firstColumn string, secondColumn string) SqldFn {
+// ColumnEq builds a callback that returns a comparison statement between two columns
+func ColumnEq(firstColumn string, secondColumn string) SqldFn {
 	return func() (string, []driver.Value, error) {
 		return firstColumn + " = " + secondColumn, nil, nil
 	}

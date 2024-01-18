@@ -1,7 +1,6 @@
 package sqld
 
 import (
-	"database/sql/driver"
 	"fmt"
 	"reflect"
 	"slices"
@@ -38,12 +37,23 @@ func TableName[M Model]() string {
 	return model.TableName()
 }
 
-func Column[M Model](column string) SqldFn {
-	return func() (string, []driver.Value, error) {
-		if !slices.Contains(Columns[M](), column) {
-			return "", nil, fmt.Errorf("column %s not present in model %T", column, *new(M))
-		}
-
-		return TableName[M]() + "." + column, nil, nil
+// Column returns a combination of `Model.TableName()` and the provided column.
+// Panics if the column is not present in the model
+func Column[M Model](column string) string {
+	fullColumn, err := ColumnErr[M](column)
+	if err != nil {
+		panic(err)
 	}
+
+	return fullColumn
+}
+
+// ColumnErr returns a combination of `Model.TableName()` and the provided column.
+// Returns error if the column is not present in the model
+func ColumnErr[M Model](column string) (string, error) {
+	if !slices.Contains(Columns[M](), column) {
+		return "", fmt.Errorf("column %s not present in model %T", column, *new(M))
+	}
+
+	return TableName[M]() + "." + column, nil
 }

@@ -22,6 +22,16 @@ func Block(block string) SqldFn {
 	}
 }
 
+func Select(columns ...string) SqldFn {
+	return func() (string, []driver.Value, error) {
+		if len(columns) == 0 {
+			return "", nil, fmt.Errorf("select: %w", ErrNoColumns)
+		}
+
+		return "SELECT\n\t" + strings.Join(columns, ",\n\t"), nil, nil
+	}
+}
+
 // Not negates the provided operator.
 func Not(op SqldFn) SqldFn {
 	return func() (string, []driver.Value, error) {

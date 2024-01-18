@@ -12,12 +12,11 @@ type testFilters struct {
 
 func buildTestQuery(filters testFilters) SqldFn {
 	return New(
-		Block(`
-			SELECT
-				name,
-				pizzas
-			FROM Table`,
+		Select(
+			"name",
+			"pizzas",
 		),
+		Block("FROM Table"),
 		Where(
 			Not(
 				And(

@@ -74,6 +74,16 @@ func Join(joinType JoinType, tableName string, op SqldFn) SqldFn {
 	}
 }
 
+// LeftJoin is a shortcut for `Join()` with `LEFT_JOIN` type
+func LeftJoin(tableName string, op SqldFn) SqldFn {
+	return Join(LEFT_JOIN, tableName, op)
+}
+
+// RightJoin is a shortcut for `Join()` with `RIGHT_JOIN` type
+func RightJoin(tableName string, op SqldFn) SqldFn {
+	return Join(RIGHT_JOIN, tableName, op)
+}
+
 // ColumnEq builds a callback that returns a comparison statement between two columns
 func ColumnEq(firstColumn string, secondColumn string) SqldFn {
 	return func() (string, []driver.Value, error) {

@@ -1,6 +1,7 @@
 package sqld
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"reflect"
 	"slices"
@@ -35,6 +36,13 @@ func Columns[M Model]() []string {
 func TableName[M Model]() string {
 	var model M
 	return model.TableName()
+}
+
+// TableNameOp is a generic proxy for `Model.TableName()`, formatted as a callback
+func TableNameOp[M Model]() SqldFn {
+	return func() (string, []driver.Value, error) {
+		return TableName[M](), nil, nil
+	}
 }
 
 // Column returns a combination of `Model.TableName()` and the provided column.

@@ -62,26 +62,43 @@ const (
 )
 
 // Join builds a callback that returns a JOIN statement of the provided type
-// with the desired table, with a condition callback
-func Join(joinType JoinType, tableName string, op SqldFn) SqldFn {
+// with the desired subject, with a condition callback
+func Join(joinType JoinType, subject SqldFn, op SqldFn) SqldFn {
+	return func() (string, []driver.Value, error) {
+		subj, subjVals, err := subject()
+		if err != nil {
+			return "", nil, fmt.Errorf("%s join: %w", joinType, err)
+		}
+
+		cond, condVals, err := op()
+		if err != nil {
+			return "", nil, fmt.Errorf("%s join: %w", joinType, err)
+		}
+
+		return string(joinType) + " JOIN " + subj + " ON " + cond, append(subjVals, condVals...), nil
+	}
+}
+
+// As builds a callback that returns an aliased subquery
+func As(op SqldFn, aliasName string) SqldFn {
 	return func() (string, []driver.Value, error) {
 		s, vals, err := op()
 		if err != nil {
-			return "", nil, fmt.Errorf("%s JOIN: %w", joinType, err)
+			return "", nil, fmt.Errorf("as %s: %w", aliasName, err)
 		}
 
-		return string(joinType) + " JOIN " + tableName + " ON " + s, vals, nil
+		return s + " AS " + aliasName, vals, nil
 	}
 }
 
 // LeftJoin is a shortcut for `Join()` with `LEFT_JOIN` type
-func LeftJoin(tableName string, op SqldFn) SqldFn {
-	return Join(LEFT_JOIN, tableName, op)
+func LeftJoin(subject SqldFn, op SqldFn) SqldFn {
+	return Join(LEFT_JOIN, subject, op)
 }
 
 // RightJoin is a shortcut for `Join()` with `RIGHT_JOIN` type
-func RightJoin(tableName string, op SqldFn) SqldFn {
-	return Join(RIGHT_JOIN, tableName, op)
+func RightJoin(subject SqldFn, op SqldFn) SqldFn {
+	return Join(RIGHT_JOIN, subject, op)
 }
 
 // ColumnEq builds a callback that returns a comparison statement between two columns

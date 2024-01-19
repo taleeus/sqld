@@ -79,7 +79,7 @@ func Join(joinType JoinType, subject SqldFn, op SqldFn) SqldFn {
 	}
 }
 
-// As builds a callback that returns an aliased subquery
+// As builds a callback that returns an aliased statement
 func As(op SqldFn, aliasName string) SqldFn {
 	return func() (string, []driver.Value, error) {
 		s, vals, err := op()

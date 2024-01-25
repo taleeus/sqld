@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var ErrNoColumns = errors.New("no columns in select statement")
+var ErrNoColumns = errors.New("no columns in statement")
 var ErrNilVal = errors.New("value is nil")
 var ErrNilColumnExpr = errors.New("column expression is nil")
 var ErrArgNotSlice = errors.New("argument is not a slice")

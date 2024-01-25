@@ -13,8 +13,10 @@ type testFilters struct {
 func buildTestQuery(filters testFilters) SqldFn {
 	return New(
 		Select(
-			"name",
-			"pizzas",
+			Columns(
+				"name",
+				"pizzas",
+			),
 		),
 		From("Table"),
 		Where(

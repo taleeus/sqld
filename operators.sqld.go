@@ -7,35 +7,44 @@ import (
 	"strings"
 )
 
-// Block builds a callback that just returns the provided strings.
-// Use it for the "static" parts of your query, like SELECT and JOIN statements.
-//
-//	sqld.Block(`
-//		SELECT
-//			name,
-//			pizzas
-//		FROM Table`,
-//	)
-func Block(block string) SqldFn {
+// Just returns a callback that just returns the provided string
+func Just(s string) SqldFn {
 	return func() (string, []driver.Value, error) {
-		return block, nil, nil
+		return s, nil, nil
+	}
+}
+
+// Columns builds a callback that returns a list of columns, comma-separated
+func Columns(columns ...string) SqldFn {
+	return func() (string, []driver.Value, error) {
+		if len(columns) == 0 {
+			return "", nil, fmt.Errorf("columns: %w", ErrNoColumns)
+		}
+
+		return strings.Join(columns, ",\n\t"), nil, nil
 	}
 }
 
 // Select builds a callback that returns a SELECT statement with a concatenation of
-// the provided columns.
-//
-//	sqld.Select(
-//		"name",
-//		"pizzas",
-//	)
-func Select(columns ...string) SqldFn {
+// the provided operators.
+func Select(ops ...SqldFn) SqldFn {
 	return func() (string, []driver.Value, error) {
-		if len(columns) == 0 {
-			return "", nil, fmt.Errorf("select: %w", ErrNoColumns)
+		if len(ops) == 0 {
+			return "", nil, fmt.Errorf("select: %w", ErrNoOps)
 		}
 
-		return "SELECT\n\t" + strings.Join(columns, ",\n\t"), nil, nil
+		columns, vals := "", make([]driver.Value, 0)
+		for _, op := range ops {
+			s, subVals, err := op()
+			if err != nil {
+				return "", nil, fmt.Errorf("select: %w", err)
+			}
+
+			columns = columns + ",\n\t" + s
+			vals = append(vals, subVals)
+		}
+
+		return "SELECT\n\t" + columns, vals, nil
 	}
 }
 
@@ -79,12 +88,12 @@ func Join(joinType JoinType, subject SqldFn, op SqldFn) SqldFn {
 	}
 }
 
-// As builds a callback that returns an aliased subquery
+// As builds a callback that returns an alias
 func As(op SqldFn, aliasName string) SqldFn {
 	return func() (string, []driver.Value, error) {
 		s, vals, err := op()
 		if err != nil {
-			return "", nil, fmt.Errorf("as %s: %w", aliasName, err)
+			return "", nil, fmt.Errorf("as: %w", err)
 		}
 
 		return s + " AS " + aliasName, vals, nil

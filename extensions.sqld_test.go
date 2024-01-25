@@ -15,7 +15,7 @@ func (testModel) TableName() string {
 }
 
 func TestColumns(t *testing.T) {
-	columns := Columns[testModel]()
+	columns := TableColumns[testModel]()
 	if len(columns) != 2 || !slices.Contains(columns, "TestModel.Hi") || !slices.Contains(columns, "TestModel.nameddd") {
 		t.Fatal("wrong columns extracted")
 	}

@@ -8,12 +8,13 @@ I suggest to use other tools like [SQLParser](https://github.com/blastrain/vites
 ## Usage
 ```go
 query := sqld.New(
-	sqld.Block(`
-		SELECT
-			name,
-			pizzas
-		FROM Table`,
+	sqld.Select(
+		sqld.Columns(
+			"name",
+			"pizzas",
+		),
 	),
+	sqld.From(sqld.Just("Table")),
 	sqld.Where(
 		sqld.And( 
 			sqld.IfNotNil(filters.Name,

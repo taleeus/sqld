@@ -22,12 +22,13 @@ type SqldFn func() (string, []driver.Value, error)
 // Example usage:
 //
 //	const query := sqld.New(
-//		sqld.Block(`
-//			SELECT
-//				name,
-//				pizzas
-//			FROM Table`,
+//		sqld.Select(
+//			sqld.Columns(
+//				"name",
+//				"pizzas",
+//			),
 //		),
+//		sqld.From(sqld.Just("Table")),
 //		sqld.Where(
 //			sqld.And(
 //				sqld.IfNotNil(filters.Name,

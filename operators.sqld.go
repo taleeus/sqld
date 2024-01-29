@@ -49,9 +49,14 @@ func Select(ops ...SqldFn) SqldFn {
 }
 
 // From builds a callback that just returns a FROM statement with the provided table
-func From(tableName string) SqldFn {
+func From(op SqldFn) SqldFn {
 	return func() (string, []driver.Value, error) {
-		return "FROM " + tableName, nil, nil
+		s, vals, err := op()
+		if err != nil {
+			return "", nil, fmt.Errorf("from: %w", err)
+		}
+
+		return "FROM " + s, vals, nil
 	}
 }
 
@@ -97,6 +102,18 @@ func As(op SqldFn, aliasName string) SqldFn {
 		}
 
 		return s + " AS " + aliasName, vals, nil
+	}
+}
+
+// SubQuery builds a callback that returns a subquery
+func SubQuery(op SqldFn, aliasName string) SqldFn {
+	return func() (string, []driver.Value, error) {
+		s, vals, err := op()
+		if err != nil {
+			return "", nil, fmt.Errorf("as: %w", err)
+		}
+
+		return fmt.Sprintf("(\n%s\n) AS %s", s, aliasName), vals, nil
 	}
 }
 
@@ -405,5 +422,25 @@ func Having(ops ...SqldFn) SqldFn {
 		}
 
 		return "HAVING\n" + s, vals, nil
+	}
+}
+
+func Limit(count *int) SqldFn {
+	return func() (string, []driver.Value, error) {
+		if count == nil {
+			return "", nil, fmt.Errorf("limit: %w", ErrNilVal)
+		}
+
+		return "LIMIT ?", []driver.Value{*count}, nil
+	}
+}
+
+func Offset(skip *int) SqldFn {
+	return func() (string, []driver.Value, error) {
+		if skip == nil {
+			return "", nil, fmt.Errorf("offset: %w", ErrNilVal)
+		}
+
+		return "OFFSET ?", []driver.Value{*skip}, nil
 	}
 }

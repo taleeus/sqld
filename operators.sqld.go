@@ -444,7 +444,7 @@ func Having(ops ...SqldFn) SqldFn {
 	}
 }
 
-func Limit(count *int) SqldFn {
+func Limit(count *uint) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if count == nil {
 			return "", nil, fmt.Errorf("limit: %w", ErrNilVal)
@@ -454,7 +454,7 @@ func Limit(count *int) SqldFn {
 	}
 }
 
-func Offset(skip *int) SqldFn {
+func Offset(skip *uint) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if skip == nil {
 			return "", nil, fmt.Errorf("offset: %w", ErrNilVal)

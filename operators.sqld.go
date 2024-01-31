@@ -48,6 +48,25 @@ func Select(ops ...SqldFn) SqldFn {
 	}
 }
 
+// Count builds a callback that returns a COUNT function with the given argument
+func Count(op SqldFn) SqldFn {
+	return func() (string, []driver.Value, error) {
+		s, vals, err := op()
+		if err != nil {
+			return "", nil, fmt.Errorf("count: %w", err)
+		}
+
+		return "COUNT(" + s + ")", vals, nil
+	}
+}
+
+// AllWildcard builds a callback that just returns a "*" string
+func AllWildcard() SqldFn {
+	return func() (string, []driver.Value, error) {
+		return "*", nil, nil
+	}
+}
+
 // From builds a callback that just returns a FROM statement with the provided table
 func From(op SqldFn) SqldFn {
 	return func() (string, []driver.Value, error) {

@@ -204,10 +204,17 @@ func In[T driver.Value](columnExpr string, vals []T) SqldFn {
 	}
 }
 
-func boolCond(cond string, ops ...SqldFn) SqldFn {
+type Condition string
+
+const (
+	AND Condition = "AND"
+	OR  Condition = "OR"
+)
+
+func boolCond(cond Condition, ops ...SqldFn) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if len(ops) == 0 {
-			return "", nil, fmt.Errorf("%s: %w", strings.ToLower(cond), ErrNoOps)
+			return "", nil, fmt.Errorf("%s: %w", strings.ToLower(string(cond)), ErrNoOps)
 		}
 
 		var sb strings.Builder
@@ -226,7 +233,7 @@ func boolCond(cond string, ops ...SqldFn) SqldFn {
 			}
 
 			if atLeastOne {
-				sb.WriteString(cond + " ")
+				sb.WriteString(string(cond) + " ")
 			}
 			sb.WriteString(s)
 			sb.WriteRune('\n')
@@ -254,7 +261,7 @@ func boolCond(cond string, ops ...SqldFn) SqldFn {
 //		),
 //	)
 func And(ops ...SqldFn) SqldFn {
-	return boolCond("AND", ops...)
+	return boolCond(AND, ops...)
 }
 
 // Or builds a callback combining all the operators with OR conditions.
@@ -268,7 +275,7 @@ func And(ops ...SqldFn) SqldFn {
 //		),
 //	)
 func Or(ops ...SqldFn) SqldFn {
-	return boolCond("OR", ops...)
+	return boolCond(OR, ops...)
 }
 
 // Where builds a callback combining all the operators in a WHERE statement.
@@ -371,6 +378,13 @@ func OrderBy(ops ...SqldFn) SqldFn {
 	}
 }
 
+type SortingOrder string
+
+const (
+	ASC  SortingOrder = "ASC"
+	DESC SortingOrder = "DESC"
+)
+
 // Asc builds a callback used to specify the sorting in `OrderBy()`.
 func Asc(columnExpr *string) SqldFn {
 	return func() (string, []driver.Value, error) {
@@ -378,7 +392,7 @@ func Asc(columnExpr *string) SqldFn {
 			return "", nil, fmt.Errorf("asc: %w", ErrNilColumnExpr)
 		}
 
-		return *columnExpr + " ASC", nil, nil
+		return *columnExpr + " " + string(ASC), nil, nil
 	}
 }
 
@@ -386,10 +400,10 @@ func Asc(columnExpr *string) SqldFn {
 func Desc(columnExpr *string) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if columnExpr == nil {
-			return "", nil, fmt.Errorf("asc: %w", ErrNilColumnExpr)
+			return "", nil, fmt.Errorf("desc: %w", ErrNilColumnExpr)
 		}
 
-		return *columnExpr + " DESC", nil, nil
+		return *columnExpr + " " + string(DESC), nil, nil
 	}
 }
 

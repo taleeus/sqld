@@ -25,11 +25,7 @@ query := sqld.New(
 			),
 		),
 	),
-	sqld.OrderBy(
-		sqld.IfNotNil(filters.OrderBy,
-			sqld.Desc(filters.OrderBy),
-		),
-	),
+	sqld.OrderBy(sqld.Desc(filters.OrderBy)),
 )
 
 s, args, err := query()

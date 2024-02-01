@@ -39,11 +39,7 @@ type SqldFn func() (string, []driver.Value, error)
 //				),
 //			),
 //		),
-//		sqld.OrderBy(
-//			sqld.IfNotNil(filters.OrderBy,
-//				sqld.Desc(filters.OrderBy),
-//			),
-//		),
+//		sqld.OrderBy(sqld.Desc(filters.OrderBy)),
 //	)
 func New(ops ...SqldFn) SqldFn {
 	return func() (string, []driver.Value, error) {

@@ -386,23 +386,19 @@ const (
 )
 
 // Sort builds a callback used to specify the sorting in `OrderBy()`.
-func Sort(order SortingOrder, columnExpr *string) SqldFn {
+func Sort(order SortingOrder, columnExpr string) SqldFn {
 	return func() (string, []driver.Value, error) {
-		if columnExpr == nil {
-			return "", nil, fmt.Errorf("sort: %w", ErrNilColumnExpr)
-		}
-
-		return *columnExpr + " " + string(order), nil, nil
+		return columnExpr + " " + string(order), nil, nil
 	}
 }
 
 // Asc builds a callback used to specify the sorting in `OrderBy()`.
-func Asc(columnExpr *string) SqldFn {
+func Asc(columnExpr string) SqldFn {
 	return Sort(ASC, columnExpr)
 }
 
 // Desc builds a callback used to specify the sorting in `OrderBy()`.
-func Desc(columnExpr *string) SqldFn {
+func Desc(columnExpr string) SqldFn {
 	return Sort(DESC, columnExpr)
 }
 

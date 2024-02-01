@@ -82,16 +82,16 @@ func From(op SqldFn) SqldFn {
 type JoinType string
 
 const (
-	LEFT_JOIN        = "LEFT"
-	RIGHT_JOIN       = "RIGHT"
-	INNER_JOIN       = "INNER"
-	CROSS_JOIN       = "CROSS"
-	FULL_JOIN        = "FULL"
-	LEFT_OUTER_JOIN  = "LEFT OUTER"
-	RIGHT_OUTER_JOIN = "RIGHT OUTER"
-	INNER_OUTER_JOIN = "INNER OUTER"
-	CROSS_OUTER_JOIN = "CROSS OUTER"
-	FULL_OUTER_JOIN  = "FULL OUTER"
+	LEFT_JOIN        JoinType = "LEFT"
+	RIGHT_JOIN       JoinType = "RIGHT"
+	INNER_JOIN       JoinType = "INNER"
+	CROSS_JOIN       JoinType = "CROSS"
+	FULL_JOIN        JoinType = "FULL"
+	LEFT_OUTER_JOIN  JoinType = "LEFT OUTER"
+	RIGHT_OUTER_JOIN JoinType = "RIGHT OUTER"
+	INNER_OUTER_JOIN JoinType = "INNER OUTER"
+	CROSS_OUTER_JOIN JoinType = "CROSS OUTER"
+	FULL_OUTER_JOIN  JoinType = "FULL OUTER"
 )
 
 // Join builds a callback that returns a JOIN statement of the provided type
@@ -197,7 +197,7 @@ func Null(columnExpr string) SqldFn {
 func In[T driver.Value](columnExpr string, vals []T) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if len(vals) == 0 {
-			return "", nil, fmt.Errorf("in (%s): %w", columnExpr, ErrEmptySlice)
+			return "", nil, nil
 		}
 
 		return columnExpr + " IN (" + strings.Repeat(", ?", len(vals))[1:] + ")", mapSlice(vals), nil
@@ -447,7 +447,7 @@ func Having(ops ...SqldFn) SqldFn {
 func Limit(count *uint) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if count == nil {
-			return "", nil, fmt.Errorf("limit: %w", ErrNilVal)
+			return "", nil, nil
 		}
 
 		return "LIMIT ?", []driver.Value{*count}, nil
@@ -457,7 +457,7 @@ func Limit(count *uint) SqldFn {
 func Offset(skip *uint) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if skip == nil {
-			return "", nil, fmt.Errorf("offset: %w", ErrNilVal)
+			return "", nil, nil
 		}
 
 		return "OFFSET ?", []driver.Value{*skip}, nil

@@ -7,7 +7,7 @@ import (
 type testFilters struct {
 	Name    *string
 	Pizzas  []string
-	OrderBy *string
+	OrderBy string
 }
 
 func buildTestQuery(filters testFilters) SqldFn {
@@ -31,11 +31,7 @@ func buildTestQuery(filters testFilters) SqldFn {
 				),
 			),
 		),
-		OrderBy(
-			IfNotNil(filters.OrderBy,
-				Desc(filters.OrderBy),
-			),
-		),
+		OrderBy(Desc(filters.OrderBy)),
 	)
 }
 
@@ -45,7 +41,7 @@ func TestSqld(t *testing.T) {
 	filters := testFilters{
 		Name:    &name,
 		Pizzas:  []string{"margherita", "diavola", "4 stagioni"},
-		OrderBy: &orderBy,
+		OrderBy: orderBy,
 	}
 
 	query := buildTestQuery(filters)
@@ -64,14 +60,6 @@ func TestSqld(t *testing.T) {
 	t.Log(s)
 
 	filters.Pizzas = nil
-	query = buildTestQuery(filters)
-	s, _, err = query()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(s)
-
-	filters.OrderBy = nil
 	query = buildTestQuery(filters)
 	s, _, err = query()
 	if err != nil {

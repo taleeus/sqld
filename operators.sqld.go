@@ -385,26 +385,25 @@ const (
 	DESC SortingOrder = "DESC"
 )
 
-// Asc builds a callback used to specify the sorting in `OrderBy()`.
-func Asc(columnExpr *string) SqldFn {
+// Sort builds a callback used to specify the sorting in `OrderBy()`.
+func Sort(order SortingOrder, columnExpr *string) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if columnExpr == nil {
-			return "", nil, fmt.Errorf("asc: %w", ErrNilColumnExpr)
+			return "", nil, fmt.Errorf("sort: %w", ErrNilColumnExpr)
 		}
 
-		return *columnExpr + " " + string(ASC), nil, nil
+		return *columnExpr + " " + string(order), nil, nil
 	}
+}
+
+// Asc builds a callback used to specify the sorting in `OrderBy()`.
+func Asc(columnExpr *string) SqldFn {
+	return Sort(ASC, columnExpr)
 }
 
 // Desc builds a callback used to specify the sorting in `OrderBy()`.
 func Desc(columnExpr *string) SqldFn {
-	return func() (string, []driver.Value, error) {
-		if columnExpr == nil {
-			return "", nil, fmt.Errorf("desc: %w", ErrNilColumnExpr)
-		}
-
-		return *columnExpr + " " + string(DESC), nil, nil
-	}
+	return Sort(DESC, columnExpr)
 }
 
 // Having builds a callback combining all the operators in a HAVING statement.

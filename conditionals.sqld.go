@@ -51,3 +51,19 @@ func IfEmpty[T driver.Value](vals []T, op SqldFn) SqldFn {
 func IfNotEmpty[T driver.Value](vals []T, op SqldFn) SqldFn {
 	return IfNotEmptyElse(vals, op, NoOp)
 }
+
+func IfStringEmptyElse(val string, trueFn, falseFn SqldFn) SqldFn {
+	return IfElse(func() bool { return val == "" }, trueFn, falseFn)
+}
+
+func IfStringNotEmptyElse(val string, trueFn, falseFn SqldFn) SqldFn {
+	return IfElse(func() bool { return val != "" }, trueFn, falseFn)
+}
+
+func IfStringEmpty(val string, op SqldFn) SqldFn {
+	return IfStringEmptyElse(val, op, NoOp)
+}
+
+func IfStringNotEmpty(val string, op SqldFn) SqldFn {
+	return IfStringNotEmptyElse(val, op, NoOp)
+}

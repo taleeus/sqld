@@ -26,7 +26,7 @@ func buildTestQuery(filters testFilters) SqldFn {
 						Eq("name", filters.Name),
 					),
 					IfNotEmpty(filters.Pizzas,
-						In("pizzas", filters.Pizzas),
+						In("pizzas", &filters.Pizzas),
 					),
 				),
 			),

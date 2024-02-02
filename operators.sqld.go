@@ -214,13 +214,13 @@ func Null(columnExpr string) SqldFn {
 // In builds a callback that checks if a column value is contained in the provided slice of values.
 //
 //	sqld.In("pizzas", filters.Pizzas)
-func In[T driver.Value](columnExpr string, vals []T) SqldFn {
+func In[T driver.Value](columnExpr string, vals *[]T) SqldFn {
 	return func() (string, []driver.Value, error) {
-		if len(vals) == 0 {
+		if len(*vals) == 0 {
 			return "", nil, nil
 		}
 
-		return columnExpr + " IN (" + strings.Repeat(", ?", len(vals))[1:] + ")", mapSlice(vals), nil
+		return columnExpr + " IN (" + strings.Repeat(", ?", len(*vals))[1:] + ")", mapSlice(*vals), nil
 	}
 }
 

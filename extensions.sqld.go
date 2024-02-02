@@ -51,7 +51,8 @@ func TableColumn[M Model](column string) string {
 // TableColumnErr returns a combination of `Model.TableName()` and the provided column.
 // Returns error if the column is not present in the model
 func TableColumnErr[M Model](column string) (string, error) {
-	if !slices.Contains(TableColumns[M](), column) {
+	var model M
+	if !slices.Contains(TableColumns[M](), model.TableName()+"."+column) {
 		return "", fmt.Errorf("column %s not present in model %T", column, *new(M))
 	}
 

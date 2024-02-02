@@ -371,7 +371,8 @@ func OrderBy(ops ...SqldFn) SqldFn {
 		vals := make([]driver.Value, 0)
 		var errs error
 
-		for i, fn := range ops {
+		atLeastOne := false
+		for _, fn := range ops {
 			s, fnVals, err := fn()
 			if err != nil {
 				errs = errors.Join(errs, err)
@@ -381,23 +382,23 @@ func OrderBy(ops ...SqldFn) SqldFn {
 				continue
 			}
 
-			sb.WriteString(s)
-			if i != len(ops)-1 {
-				sb.WriteRune(',')
+			if atLeastOne {
+				sb.WriteString(",\n\t")
 			}
-			sb.WriteRune('\n')
+			sb.WriteString(s)
 
 			if len(fnVals) != 0 {
 				vals = append(vals, fnVals...)
 			}
+
+			atLeastOne = true
 		}
 
 		if errs != nil {
 			return "", nil, fmt.Errorf("orderBy:\n\t\t%w", errs)
 		}
 
-		s := sb.String()
-		if s == "" {
+		if !atLeastOne {
 			return "", nil, nil
 		}
 

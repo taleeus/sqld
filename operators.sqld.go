@@ -33,18 +33,27 @@ func Select(ops ...SqldFn) SqldFn {
 			return "", nil, fmt.Errorf("select: %w", ErrNoOps)
 		}
 
-		columns, vals := "", make([]driver.Value, 0)
+		columns, vals := make([]string, 0, len(ops)), make([]driver.Value, 0)
 		for _, op := range ops {
 			s, subVals, err := op()
 			if err != nil {
 				return "", nil, fmt.Errorf("select: %w", err)
 			}
 
-			columns = columns + ",\n\t" + s
+			if s == "" {
+				continue
+			}
+
+			columns = append(columns, s)
 			vals = append(vals, subVals)
 		}
 
-		return "SELECT\n\t" + columns, vals, nil
+		columnsJoin := strings.Join(columns, ",\n\t")
+		if columnsJoin == "" {
+			return "", nil, fmt.Errorf("select: %w", ErrNoColumns)
+		}
+
+		return "SELECT\n\t" + columnsJoin, vals, nil
 	}
 }
 

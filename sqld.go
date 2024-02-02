@@ -48,7 +48,7 @@ func New(ops ...SqldFn) SqldFn {
 		}
 
 		var sb strings.Builder
-		vals := make([]driver.Value, 0, len(ops))
+		vals := make([]driver.Value, 0)
 		var errs error
 
 		for _, fn := range ops {
@@ -64,7 +64,9 @@ func New(ops ...SqldFn) SqldFn {
 			sb.WriteString(s)
 			sb.WriteRune('\n')
 
-			vals = append(vals, fnVals)
+			if len(fnVals) != 0 {
+				vals = append(vals, fnVals...)
+			}
 		}
 
 		if errs != nil {

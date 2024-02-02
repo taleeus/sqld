@@ -45,7 +45,7 @@ func Select(ops ...SqldFn) SqldFn {
 			}
 
 			columns = append(columns, s)
-			vals = append(vals, subVals)
+			vals = append(vals, subVals...)
 		}
 
 		columnsJoin := strings.Join(columns, ",\n\t")
@@ -247,7 +247,7 @@ func boolCond(cond Condition, ops ...SqldFn) SqldFn {
 			sb.WriteString(s)
 			sb.WriteRune('\n')
 
-			vals = append(vals, fnVals)
+			vals = append(vals, fnVals...)
 			atLeastOne = true
 		}
 
@@ -322,7 +322,7 @@ func Where(ops ...SqldFn) SqldFn {
 			sb.WriteString("\t" + s)
 			sb.WriteRune('\n')
 
-			vals = append(vals, fnVals)
+			vals = append(vals, fnVals...)
 		}
 
 		if errs != nil {
@@ -371,7 +371,7 @@ func OrderBy(ops ...SqldFn) SqldFn {
 			}
 			sb.WriteRune('\n')
 
-			vals = append(vals, fnVals)
+			vals = append(vals, fnVals...)
 		}
 
 		if errs != nil {
@@ -446,7 +446,7 @@ func Having(ops ...SqldFn) SqldFn {
 			sb.WriteString("\t" + s)
 			sb.WriteRune('\n')
 
-			vals = append(vals, fnVals)
+			vals = append(vals, fnVals...)
 		}
 
 		if errs != nil {

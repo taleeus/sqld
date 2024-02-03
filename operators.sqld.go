@@ -269,7 +269,7 @@ func boolCond(cond Condition, ops ...SqldFn) SqldFn {
 			return "", nil, fmt.Errorf("%s: %w", cond, errs)
 		}
 
-		return sb.String(), vals, nil
+		return "(" + sb.String() + ")", vals, nil
 	}
 }
 

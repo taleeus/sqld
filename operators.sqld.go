@@ -487,6 +487,51 @@ func Having(ops ...SqldFn) SqldFn {
 	}
 }
 
+func GroupBy(ops ...SqldFn) SqldFn {
+	return func() (string, []driver.Value, error) {
+		if len(ops) == 0 {
+			return "", nil, fmt.Errorf("groupBy: %w", ErrNoOps)
+		}
+
+		var sb strings.Builder
+		vals := make([]driver.Value, 0)
+		var errs error
+
+		atLeastOne := false
+		for _, fn := range ops {
+			s, fnVals, err := fn()
+			if err != nil {
+				errs = errors.Join(errs, err)
+			}
+
+			if errs != nil || s == "" {
+				continue
+			}
+
+			if atLeastOne {
+				sb.WriteString(",\n\t")
+			}
+			sb.WriteString(s)
+
+			if len(fnVals) != 0 {
+				vals = append(vals, fnVals...)
+			}
+
+			atLeastOne = true
+		}
+
+		if errs != nil {
+			return "", nil, fmt.Errorf("groupBy:\n\t\t%w", errs)
+		}
+
+		if !atLeastOne {
+			return "", nil, nil
+		}
+
+		return "GROUP BY\n" + sb.String(), vals, nil
+	}
+}
+
 func Limit(count *uint) SqldFn {
 	return func() (string, []driver.Value, error) {
 		if count == nil {

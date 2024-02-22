@@ -72,6 +72,18 @@ func Count(op SqldFn) SqldFn {
 	}
 }
 
+// Coalesce builds a callback that returns an coalesced expression
+func Coalesce(op SqldFn, fallback string) SqldFn {
+	return func() (string, []driver.Value, error) {
+		s, vals, err := op()
+		if err != nil {
+			return "", nil, fmt.Errorf("coalesce: %w", err)
+		}
+
+		return fmt.Sprintf("COALESCE(%s, %s)", s, fallback), vals, nil
+	}
+}
+
 // AllWildcard builds a callback that just returns a "*" string
 func AllWildcard() SqldFn {
 	return func() (string, []driver.Value, error) {

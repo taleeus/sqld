@@ -3,10 +3,10 @@ name: Test
 on:
   push:
     paths:
-      - '**.go'
-      - 'go.mod'
-      - 'go.sum'
-      - '.github/workflows/test.yml'
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/test.yml"
 
 jobs:
   test:
@@ -19,7 +19,8 @@ jobs:
       - name: Setup Golang with cache
         uses: magnetikonline/action-golang-cache@v4
         with:
-          go-version-file: go.mod
+          go-version-file: integration/go.mod
 
-      - name: Run tests
-        run: go test ./...
+      - name: Run fuzzing tests
+        working-directory: integration
+        run: go test -fuzz . -fuzztime 1m

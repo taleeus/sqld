@@ -37,7 +37,7 @@ func Section(sect Sect, cond string) string {
 		return ""
 	}
 
-	return string(sect) + " " + cond
+	return "\n" + string(sect) + " " + cond
 }
 
 // Where builds a WHERE filtering section.
@@ -132,7 +132,7 @@ func OrderBy(sorts ...string) string {
 		return ""
 	}
 
-	return "ORDER BY " + bldr.String()
+	return "\nORDER BY " + bldr.String()
 }
 
 // PrinterFn is a callback that applies a parameter to the given statement (usually a filter)
@@ -145,24 +145,17 @@ func Eq(target string) PrinterFn {
 	}
 }
 
-// StartsWith produces a PrinterFn that checks if the target text starts with the given parameter
-func StartsWith(target string) PrinterFn {
+// Like produces a PrinterFn that checks if the target text respects the given pattern
+func Like(target string) PrinterFn {
 	return func(param string) string {
-		return fmt.Sprintf("%s ILIKE :%s%%", target, param)
+		return fmt.Sprintf("%s LIKE :%s", target, param)
 	}
 }
 
-// EndsWith produces a PrinterFn that checks if the target text ends with the given parameter
-func EndsWith(target string) PrinterFn {
+// ILike produces a PrinterFn that checks if the target text respects the given pattern, ignoring the casing
+func ILike(target string) PrinterFn {
 	return func(param string) string {
-		return fmt.Sprintf("%s ILIKE %%:%s", target, param)
-	}
-}
-
-// Contains produces a PrinterFn that checks if the target text contains the given parameter
-func Contains(target string) PrinterFn {
-	return func(param string) string {
-		return fmt.Sprintf("%s ILIKE %%:%s%%", target, param)
+		return fmt.Sprintf("%s ILIKE :%s", target, param)
 	}
 }
 
@@ -198,6 +191,69 @@ func Lt(target string) PrinterFn {
 func Lte(target string) PrinterFn {
 	return func(param string) string {
 		return fmt.Sprintf("%s <= :%s", target, param)
+	}
+}
+
+// FmtStartsWith maps the parameter with the desired pattern.
+// Skips the mapping if the value is empty or nil
+func FmtStartsWith[S string | *string](val S) S {
+	if cast, ok := any(val).(string); ok {
+		if cast == "" {
+			return val
+		}
+
+		return any(cast + "%").(S)
+	} else if cast, ok := any(val).(*string); ok {
+		if cast == nil {
+			return val
+		}
+
+		str := *cast + "%"
+		return any(&str).(S)
+	} else {
+		panic("unreachable")
+	}
+}
+
+// FmtEndsWith maps the parameter with the desired pattern.
+// Skips the mapping if the value is empty or nil
+func FmtEndsWith[S string | *string](val S) S {
+	if cast, ok := any(val).(string); ok {
+		if cast == "" {
+			return val
+		}
+
+		return any("%" + cast).(S)
+	} else if cast, ok := any(val).(*string); ok {
+		if cast == nil {
+			return val
+		}
+
+		str := "%" + *cast
+		return any(&str).(S)
+	} else {
+		panic("unreachable")
+	}
+}
+
+// FmtContains maps the parameter with the desired pattern.
+// Skips the mapping if the value is empty or nil
+func FmtContains[S string | *string](val S) S {
+	if cast, ok := any(val).(string); ok {
+		if cast == "" {
+			return val
+		}
+
+		return any("%" + cast + "%").(S)
+	} else if cast, ok := any(val).(*string); ok {
+		if cast == nil {
+			return val
+		}
+
+		str := "%" + *cast + "%"
+		return any(&str).(S)
+	} else {
+		panic("unreachable")
 	}
 }
 

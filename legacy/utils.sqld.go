@@ -1,4 +1,4 @@
-package sqld
+package sqld_legacy
 
 import "database/sql/driver"
 

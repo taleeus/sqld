@@ -1,78 +1,238 @@
 package sqld
 
 import (
-	"database/sql/driver"
-	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
-var ErrNoColumns = errors.New("no columns in statement")
-var ErrNilVal = errors.New("value is nil")
-var ErrNilColumnExpr = errors.New("column expression is nil")
-var ErrArgNotSlice = errors.New("argument is not a slice")
-var ErrEmptySlice = errors.New("slice is empty")
-var ErrNoOps = errors.New("operations slice is empty")
+// Op is a boolean operator
+type Op string
 
-// SqldFn is the type describing all callbacks used in the library.
-type SqldFn func() (string, []driver.Value, error)
+const (
+	OR  Op = "OR"
+	AND Op = "AND"
+)
 
-// New builds a `SqldFn` callback combining the provided operators.
-//
-// Example usage:
-//
-//	const query := sqld.New(
-//		sqld.Select(
-//			sqld.Columns(
-//				"name",
-//				"pizzas",
-//			),
-//		),
-//		sqld.From(sqld.Just("Table")),
-//		sqld.Where(
-//			sqld.And(
-//				sqld.IfNotNil(filters.Name,
-//					sqld.Eq("name", filters.Name),
-//				),
-//				sqld.IfNotEmpty(filters.Pizzas,
-//					sqld.In("pizzas", filters.Pizzas),
-//				),
-//			),
-//		),
-//		sqld.OrderBy(sqld.Desc(filters.OrderBy)),
-//	)
-func New(ops ...SqldFn) SqldFn {
-	return func() (string, []driver.Value, error) {
-		if len(ops) == 0 {
-			return "", nil, fmt.Errorf("query: %w", ErrNoOps)
-		}
+// Sect is a filtering section of the query
+type Sect string
 
-		var sb strings.Builder
-		vals := make([]driver.Value, 0)
-		var errs error
+const (
+	WHERE  Sect = "WHERE"
+	HAVING Sect = "HAVING"
+)
 
-		for _, fn := range ops {
-			s, fnVals, err := fn()
-			if err != nil {
-				errs = errors.Join(errs, err)
-			}
+// Sorting is the direction in which you want to sort a query
+type Sorting string
 
-			if errs != nil {
-				continue
-			}
+const (
+	ASC  Sorting = "ASC"
+	DESC Sorting = "DESC"
+)
 
-			sb.WriteString(s)
-			sb.WriteRune('\n')
-
-			if len(fnVals) != 0 {
-				vals = append(vals, fnVals...)
-			}
-		}
-
-		if errs != nil {
-			return "", nil, fmt.Errorf("query:\n%w", errs)
-		}
-
-		return sb.String(), vals, nil
+// Section builds a filtering section.
+// If the condition is empty, the returned string is also empty.
+func Section(sect Sect, cond string) string {
+	if cond == "" {
+		return ""
 	}
+
+	return string(sect) + " " + cond
+}
+
+// Where builds a WHERE filtering section.
+// If the condition is empty, the returned string is also empty.
+func Where(pred string) string {
+	return Section(WHERE, pred)
+}
+
+// Having builds an HAVING filtering section.
+// If the condition is empty, the returned string is also empty.
+func Having(pred string) string {
+	return Section(HAVING, pred)
+}
+
+// Cond builds a condition concatenating the filters with the given operator.
+// If the filters are all empty, the returned string is also empty.
+func Cond(op Op, filters ...string) string {
+	bldr := strings.Builder{}
+	for _, filter := range filters {
+		if filter == "" {
+			continue
+		}
+
+		if bldr.Len() != 0 {
+			bldr.WriteString(" " + string(op) + "\n\t")
+		}
+
+		bldr.WriteString(filter)
+	}
+
+	if bldr.Len() == 0 {
+		return ""
+	}
+
+	return "(\n\t" + bldr.String() + "\n)"
+}
+
+// And builds a condition concatenating the filters with the AND operator.
+// If the filters are all empty, the returned string is also empty.
+func And(filters ...string) string {
+	return Cond(AND, filters...)
+}
+
+// Or builds a condition concatenating the filters with the OR operator.
+// If the filters are all empty, the returned string is also empty.
+func Or(filters ...string) string {
+	return Cond(OR, filters...)
+}
+
+// Not negates the given string.
+// If the filter is empty, the returned string is also empty.
+func Not(filter string) string {
+	if filter == "" {
+		return ""
+	}
+
+	return "NOT(" + filter + ")"
+}
+
+// Sort produces a sorting statement on the column, with the given direction
+func Sort(column string, sorting Sorting) string {
+	return column + " " + string(sorting)
+}
+
+// Asc produces an ASC sorting statement on the column, with the given direction
+func Asc(column string) string {
+	return Sort(column, ASC)
+}
+
+// Desc produces a DESC sorting statement on the column, with the given direction
+func Desc(column string) string {
+	return Sort(column, DESC)
+}
+
+// OrderBy builds an ORDER BY section.
+// If the sortings are all empty, the returned string is also empty.
+func OrderBy(sorts ...string) string {
+	bldr := strings.Builder{}
+	for _, sort := range sorts {
+		if sort == "" {
+			continue
+		}
+
+		if bldr.Len() > 0 {
+			bldr.WriteString(",\n\t")
+		}
+
+		bldr.WriteString(sort)
+	}
+
+	if bldr.Len() == 0 {
+		return ""
+	}
+
+	return "ORDER BY " + bldr.String()
+}
+
+// PrinterFn is a callback that applies a parameter to the given statement (usually a filter)
+type PrinterFn func(string) string
+
+// Eq produces a PrinterFn that equates the target with the given parameter
+func Eq(target string) PrinterFn {
+	return func(param string) string {
+		return fmt.Sprintf("%s = :%s", target, param)
+	}
+}
+
+// StartsWith produces a PrinterFn that checks if the target text starts with the given parameter
+func StartsWith(target string) PrinterFn {
+	return func(param string) string {
+		return fmt.Sprintf("%s ILIKE :%s%%", target, param)
+	}
+}
+
+// EndsWith produces a PrinterFn that checks if the target text ends with the given parameter
+func EndsWith(target string) PrinterFn {
+	return func(param string) string {
+		return fmt.Sprintf("%s ILIKE %%:%s", target, param)
+	}
+}
+
+// Contains produces a PrinterFn that checks if the target text contains the given parameter
+func Contains(target string) PrinterFn {
+	return func(param string) string {
+		return fmt.Sprintf("%s ILIKE %%:%s%%", target, param)
+	}
+}
+
+// In produces a PrinterFn that checks if the target is contained in the given parameter slice
+func In(target string) PrinterFn {
+	return func(param string) string {
+		return fmt.Sprintf("%s IN(:%s)", target, param)
+	}
+}
+
+// Gt produces a PrinterFn that checks if the target is greater than the given parameter
+func Gt(target string) PrinterFn {
+	return func(param string) string {
+		return fmt.Sprintf("%s > :%s", target, param)
+	}
+}
+
+// Gte produces a PrinterFn that checks if the target is greater or equal the given parameter
+func Gte(target string) PrinterFn {
+	return func(param string) string {
+		return fmt.Sprintf("%s >= :%s", target, param)
+	}
+}
+
+// Lt produces a PrinterFn that checks if the target is smaller than the given parameter
+func Lt(target string) PrinterFn {
+	return func(param string) string {
+		return fmt.Sprintf("%s < :%s", target, param)
+	}
+}
+
+// Lte produces a PrinterFn that checks if the target is smaller or equal the given parameter
+func Lte(target string) PrinterFn {
+	return func(param string) string {
+		return fmt.Sprintf("%s <= :%s", target, param)
+	}
+}
+
+// Params is just an alias for a map containing the query parameters
+type Params map[string]any
+
+// Predicate is a callback that validates a condition on a value
+type PredicateFn[T any] func(T) bool
+
+// If is used to build the query dynamically, based on runtime conditions.
+//
+// If the predicate is true, the value is pushed in the parameter map and the printed filter is returned.
+// If the predicate is false, the parameter map is untouched, and an empty string is returned.
+func If[T any](pred PredicateFn[T], val T, params *Params, printer PrinterFn) string {
+	if !pred(val) {
+		return ""
+	}
+
+	argName := "arg" + strconv.Itoa(len(*params))
+	(*params)[argName] = val
+
+	return printer(argName)
+}
+
+// IfNotNil is a proxy for If with a predicate that checks if the pointer is not nil
+func IfNotNil[T any](val *T, params *Params, printer PrinterFn) string {
+	return If(func(t *T) bool {
+		return t != nil
+	}, val, params, printer)
+}
+
+// IfNotZero is a proxy for If with a predicate that checks if the value is not equal to the zero value of its type
+func IfNotZero[T comparable](val T, params *Params, printer PrinterFn) string {
+	return If(func(t T) bool {
+		var zero T
+		return t != zero
+	}, val, params, printer)
 }

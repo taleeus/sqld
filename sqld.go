@@ -135,6 +135,11 @@ func OrderBy(sorts ...string) string {
 	return "\nORDER BY " + bldr.String()
 }
 
+// Null produces a filter that checks if the target is NULL
+func Null(target string) string {
+	return target + " IS NULL"
+}
+
 // PrinterFn is a callback that applies a parameter to the given statement (usually a filter)
 type PrinterFn func(string) string
 

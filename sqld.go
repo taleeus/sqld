@@ -292,3 +292,10 @@ func IfNotZero[T comparable](val T, params *Params, printer PrinterFn) string {
 		return t != zero
 	}, val, params, printer)
 }
+
+// IfNotEmpty is a proxy for If with a predicate that checks if the slice is not empty
+func IfNotEmpty[T any](val []T, params *Params, printer PrinterFn) string {
+	return If(func(t []T) bool {
+		return len(t) > 0
+	}, val, params, printer)
+}

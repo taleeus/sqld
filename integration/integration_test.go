@@ -74,6 +74,7 @@ func FuzzFilters(f *testing.F) {
 				sqld.IfNotZero(id, &params, sqld.Eq("id")),
 				sqld.Or(
 					sqld.IfNotZero(sqld.FmtContains(name), &params, sqld.ILike("name")),
+					sqld.IfNotZero(sqld.FmtContains(name), &params, sqld.PgILike("name")),
 					sqld.IfNotZero(time.UnixMilli(createdAtMs), &params, sqld.Gte("created_at")),
 				),
 			)),

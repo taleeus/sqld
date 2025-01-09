@@ -160,6 +160,15 @@ func Like(target string) PrinterFn {
 // ILike produces a PrinterFn that checks if the target text respects the given pattern, ignoring the casing
 func ILike(target string) PrinterFn {
 	return func(param string) string {
+		return fmt.Sprintf("LOWER(%s) LIKE LOWER(:%s)", target, param)
+	}
+}
+
+// ILike produces a PrinterFn that checks if the target text respects the given pattern, ignoring the casing
+//
+// Instead of lowering the two strings, it uses Postgres ILIKE operand
+func PgILike(target string) PrinterFn {
+	return func(param string) string {
 		return fmt.Sprintf("%s ILIKE :%s", target, param)
 	}
 }
